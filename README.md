@@ -1,9 +1,9 @@
-# TIKU
-TIKU token is an upgrade of a TIKI protocol. Its code is adjusted to work on KuCoin Community Chain and contains further improvements (LSD programme) to incentivize holding and reward loyal holders even more.
+# Pool Party Token
+Pool Party token is the pillar of Pool Part Investment Group ecosystem on BSC, it is created by authors of TIKU DeFi From KCC.
 
-Telegram: https://t.me/tikutoken
+Telegram: https://t.me/
 
-WEB: https://tikutoken.com
+WEB: https://poolparty.investments
 
 Twitter: https://twitter.com/tikutoken
 
