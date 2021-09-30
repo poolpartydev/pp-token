@@ -5,5 +5,5 @@ Telegram: https://t.me/
 
 WEB: https://poolparty.investments
 
-Twitter: https://twitter.com/tikutoken
+Twitter: https://twitter.com/PoolPartyInvest
 
