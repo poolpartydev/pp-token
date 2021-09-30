@@ -6,8 +6,8 @@ import "./libraries/SafeMath.sol";
 import "./libraries/IterableMapping.sol";
 import "./Ownable.sol";
 import "./ERC20.sol";
-import "./interfaces/IUniswapV2Pair.sol";
 import "./interfaces/IUniswapV2Router02.sol";
+import "./interfaces/IUniswapV2Factory.sol";
 
 /**
     @title Pool Party token
@@ -17,7 +17,7 @@ contract PPToken is ERC20, Ownable {
     using SafeMath for uint256;
 
     IUniswapV2Router02 public uniswapV2Router;
-    address public uniswapV2Pair; 
+    address public immutable uniswapV2Pair; 
 
     address public LSDFundAddress;
 
@@ -31,17 +31,15 @@ contract PPToken is ERC20, Ownable {
 
     address public liquidityWallet;
 
-    uint256 public maxSellTransactionAmount = 1000000 * (10**18);
-    uint256 public swapTokensAtAmount = 200000 * (10**18);
+    uint256 public maxSellTransactionAmount = 1000000 * (10**18); // 1 Million PP
+    uint256 public swapTokensAtAmount = 200000 * (10**18); // 200k PP
 
     uint256 public immutable liquidityFee;
-    uint256 public immutable LSDFundFee; //new
+    uint256 public immutable LSDFundFee;
     uint256 public immutable totalFees;
 
     // sells have fees of 20% - 15 * 1.33 = ~20
     uint256 public immutable sellFeeIncreaseFactor = 1333; 
-
-
 
     // exlcude from fees and max transaction amount
     mapping (address => bool) private _isExcludedFromFees;
@@ -88,21 +86,20 @@ contract PPToken is ERC20, Ownable {
     	isInPresaleState = true;
     	isPairCreated = false;
     	
-        // TODO: add LSD fund address
-    	address _LSDFundAddress = address(0x24F3dbF2AF9B04AD640f4Aa02Fbc9B66c41DC542);
-    	LSDFundAddress = _LSDFundAddress;
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        // Creates a pancakeswap pair for PP-WBNB
+        address _uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
+            .createPair(address(this), _uniswapV2Router.WETH());
 
-    	IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        uniswapV2Router = _uniswapV2Router;
+        uniswapV2Pair = _uniswapV2Pair;
 
-        uniswapV2Router = _uniswapV2Router;        
+        _setAutomatedMarketMakerPair(_uniswapV2Pair, true);       
 
         // exclude from paying fees or having max transaction amount
         excludeFromFees(liquidityWallet, true);
         excludeFromFees(address(this), true);
         excludeFromFees(LSDFundAddress, true);
-        // TODO: add LSD Bag address
-        excludeFromFees(address(0), true);
-
 
         /*
             _mint is an internal function in ERC20.sol that is only called here,
@@ -136,13 +133,7 @@ contract PPToken is ERC20, Ownable {
     }
 
     function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
-        require(pair != uniswapV2Pair, "PP Token: The PCS pair cannot be removed from automatedMarketMakerPairs!");
-        
-        //sets the default trading pair
-        if(uniswapV2Pair == address(0)) {
-            uniswapV2Pair = pair;
-        }
-        
+        require(pair != uniswapV2Pair, "PP Token: The PCS pair cannot be removed from automatedMarketMakerPairs!");        
         _setAutomatedMarketMakerPair(pair, value);
     }
 
@@ -298,6 +289,7 @@ contract PPToken is ERC20, Ownable {
     }
     
     function swapAndSendToLSDFund(uint256 _amount) private {
+        require(LSDFundAddress != address(0), "PP Token: LSD Fund address is not set.");
         swapTokensForBnb(_amount);
         // Sends whole balance to LSD fund 
         uint256 bnbToLSDFund = address(this).balance;
